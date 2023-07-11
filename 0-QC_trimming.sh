@@ -62,7 +62,7 @@ done
 multiqc -i "PROJECT_NAME_RAW_SEQUENCES" $workingdir/
 
 ## perform fastp to remove low quality reads and adaptors 
-for i in {$list[@]}
+for i in ${list[@]}
 do
         echo ${i}
 
