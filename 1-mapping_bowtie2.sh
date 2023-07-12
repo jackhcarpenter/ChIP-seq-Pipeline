@@ -91,7 +91,7 @@ do
         ## Run some stats on aligned/mapped reads
         bamtools stats \
         -in $workingdir/bowtie/${i}.sorted.bam \
-        > $workingdir/${i}.sorted.stats.txt
+        > $workingdir/bowtie/${i}.sorted.stats.txt
         ## look at the stats files to quality check the data
 
 done
