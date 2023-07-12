@@ -44,9 +44,10 @@ export workingdir=/your/working/dir
 #################################################################################
 
 ## list of samples
-list=("sample_input1" "sample_inputn" "sample_ip1" "sample_ipn" "sample_neg1"\
- "sample_negn" "control_input1" "control_inputn" "control_ip1" "control_ipn"\
- "control_neg1" "control_negn")
+list=(
+        "sample_input1" "sample_inputn" "sample_ip1" "sample_ipn" "sample_neg1"\
+        "sample_negn" "control_input1" "control_inputn" "control_ip1" "control_ipn"\
+        "control_neg1" "control_negn")
 
 ## perform fastqc on the raw PE data
 for i in list ${list[@]}
