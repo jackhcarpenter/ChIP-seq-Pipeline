@@ -53,9 +53,9 @@ bowtie2-build \
 
 ## List of sequences to map to indexed reference genome
 list=(
-    "sample_input1" "sample_inputn" "sample_ip1" "sample_ipn" "sample_neg1"\ 
-    "sample_negn" "control_input1" "control_inputn" "control_ip1" "control_ipn"\ 
-    "control_neg1" "control_negn")
+        "sample_input1" "sample_inputn" "sample_ip1" "sample_ipn" "sample_neg1"\
+        "sample_negn" "control_input1" "control_inputn" "control_ip1" "control_ipn"\
+        "control_neg1" "control_negn")
 
 ## Map forward and reverse reads to the indexed referenced genome
 for i in ${list[@]}
@@ -70,7 +70,7 @@ do
         -p 8 \
         -x $refdir/SPECIES.GENOME.INDEX.fa \
         -1 $workingdir/trimmed_reads${i}_fp1.fastq.gz \
-        -2 $workingdir/trimmed/${i}_fp2.fastq.gz \
+        -2 $workingdir/trimmed_reads/${i}_fp2.fastq.gz \
         -S $workingdir/bowtie/${i}.sam
 
         ## Compress the aligned sam files to bam files
