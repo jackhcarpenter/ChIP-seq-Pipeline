@@ -80,7 +80,7 @@ do
 
         ## Organise mapped reads and index them for faster access during 
         ## downstream processing
-        samtools view \
+        samtools sort \
         -@ ${SLURM_CPUS_PER_TASK} \
         -o $workingdir/bowtie/${i}.sorted.bam \
         $workingdir/bowtie/${i}.bam
