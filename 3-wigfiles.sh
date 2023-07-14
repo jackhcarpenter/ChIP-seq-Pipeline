@@ -58,13 +58,13 @@ do
         echo ${i}
 
 ## Use samtools to create an index in fasta format so as betools can access quickly
-    samtools faidx $refdir/SPECIES.GENOME.INDEX.fa
+        samtools faidx $refdir/SPECIES_GENOME.dna.toplevel.fa
 
 ## Bin (make discrete) map sequences to create histograms 
         bedtools genomecov \
         -ibam $workingdir/bowtie/${i}.sorted.bam \
         -bg \
-        -g $redir/SPECIES.GENOME.INDEX.fa.fai > $workingdir/beds/${i}.bedgraph
+        -g $redir/SPECIES_GENOME.dna.toplevel.fai > $workingdir/beds/${i}.bedgraph
 
 ## Generate a coverage track to view in Integrated Genome Viewer
         bamCoverage \
