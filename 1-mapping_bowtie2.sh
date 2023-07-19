@@ -75,7 +75,7 @@ do
 
         ## Compress the aligned sam files to bam files
         samtools view \
-        -bS $workingdir/bowtie/${i}.sam \
+        -b $workingdir/bowtie/${i}.sam \
         > $workingdir/bowtie/${i}.bam \
 
         ## Organise mapped reads and index them for faster access during 
