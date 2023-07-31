@@ -53,8 +53,7 @@ do
         echo ${i}
 
 ## Mark the duplicated reads
-        java \
-        -jar $PICARD MarkDuplicates \
+        java -jar $PICARD MarkDuplicates \
         I=$workingdir/bowtie/${i}.sorted.bam \
         O=$workingdir/markdup/${i}.markdup.bam \
         M=$workingdir/markdup/${i}.metrics.markdup.txt \
@@ -66,8 +65,7 @@ do
         > $workingdir/markdup/${i}.markdup.dupstats.txt
 
 ## Remove the duplicated reads
-        java \
-        -jar $PICARD MarkDuplicates \
+        java -jar $PICARD MarkDuplicates \
         I=$workingdir/bowtie/${i}.sorted.bam \
         O=$workingdir/markdup/${i}.rmdup.bam \
         M=$workingdir/markdup/${i}.metrics.rmdup.txt \
