@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#SBATCH --partition=jumbo       # the requested queue
+#SBATCH --partition=defq       # the requested queue
 #SBATCH --nodes=1              # number of nodes to use
 #SBATCH --tasks-per-node=1     # for parallel distributed jobs
 #SBATCH --cpus-per-task=8      # for multi-threaded jobs
-#SBATCH --mem-per-cpu=2G      # in megabytes, unless unit explicitly stated
+#SBATCH --mem-per-cpu=4G      # in megabytes, unless unit explicitly stated
 #SBATCH --time=20:00:00
 #SBATCH --error=logs/%J.err         # redirect stderr to this file
 #SBATCH --output=logs/%J.out        # redirect stdout to this file
@@ -29,45 +29,44 @@ echo \$SLURM_MEM_PER_CPU=${SLURM_MEM_PER_CPU}
 # Modulels to Load and Setup
 #################################################################################
 
-module load samtools/1.10
-module load bedtools/2.29.1
 module load deeptools/3.5.1
 
 ## point to the directory containing the reference genome where sequences will be
 ## mapped
-export refdir=/mnt/scratch/c1831460/ChIP/At_reference_genome
+#export refdir=/mnt/scratch/c1831460/ChIP/At_reference_genome
 
 ## point to the working directory
 export workingdir=/mnt/scratch/c1831460/ChIP
 
-##REMEMBER: set up any directories that the software needs in this script in case 
+##REMEMBER: set up any directories that the software needs in this script in case
 ##it is unable to do so itself
 
 #################################################################################
 # Main CMD
 #################################################################################
 
-list=(
-        "Col-O-AB_S2" "Col-O-Input_S3" "Col-O-NoAB_S1" \
-	"TCPA-AB_S5" "TCPA-Input_S6" "TCPA-NoAB_S4")
+echo "============================="
+echo "bamCompare = running"
+
+## Bin (make discrete) map sequences to create histograms
+bamCompare \
+	-b1 $workingdir/bowtie/maxins_650/TCPA-AB_S5.sorted.bam \
+	-b2 $workingdir/bowtie/maxins_650/Col-O-AB_S2.sorted.bam \
+	--scaleFactorsMethod None \
+	--normalizeUsing BPM \
+	-o $workingdir/bowtie/maxins_650/TCP4-AB_vs_Col-0-AB.bw \
+
+echo "BamCompare = complete"
+echo "============================="
 
 
-for i in ${list[@]}
-do
-        echo ${i}
 
-## Use samtools to create an index in fasta format so as betools can access quickly
-    samtools faidx $refdir/Arabidopsis_thaliana.release56.TAIR10.dna.toplevel.fa
 
-## Bin (make discrete) map sequences to create histograms 
-        bedtools genomecov \
-        -ibam $workingdir/bowtie/maxins_650/${i}.sorted.bam \
-        -bg \
-        -g $redir/Arabidopsis_thaliana.release56.TAIR10.dna.toplevel.fa.fai > $workingdir/beds/${i}.bedgraph
 
-## Generate a coverage track to view in Integrated Genome Viewer
-        bamCoverage \
-        -b $workingdir/bowtie/maxins_650/${i}.sorted.bam \
-        -o $workingdir/wigs/${i}.bw
 
-done
+
+
+
+
+
+
