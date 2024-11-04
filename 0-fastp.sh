@@ -1,15 +1,14 @@
 #!/bin/bash
 
-#SBATCH --partition=defq       # the requested queue
+#SBATCH --partition=jumbo       # the requested queue
 #SBATCH --nodes=1              # number of nodes to use
 #SBATCH --tasks-per-node=1     # for parallel distributed jobs
 #SBATCH --cpus-per-task=4      # for multi-threaded jobs
-#SBATCH --mem-per-cpu=4G      # in megabytes, unless unit explicitly stated
+#SBATCH --mem-per-cpu=16G      # in megabytes, unless unit explicitly stated
 #SBATCH --error=logs/%J.err         # redirect stderr to this file
 #SBATCH --output=logs/%J.out        # redirect stdout to this file
 #SBATCH --mail-user=carpenterj3@cardiff.ac.uk      # email
 #SBATCH --mail-type=BEGIN,END,FAIL      # email on job start, end, and/or failure
-
 
 #################################################################################
 # Print Slurm Parameters to Console
@@ -33,31 +32,73 @@ module load fastp/v0.20
 
 export workingdir=/mnt/scratch/c1831460/ChIP
 
+echo "working dir =" $workingdir
+
+mkdir fastp
+
+export exportdir=/mnt/scratch/c1831460/ChIP/fastp
+
+echo "export dir =" $exportdir
+
 ##REMEMBER: set up any directories that the software needs in this script in case
 ##it is unable to do so itself
 
 #################################################################################
-# Main CMD
+# Main CMDs
 #################################################################################
 
-## list of samples
-list=("Col-O-AB_S2" "Col-O-Input_S3" "Col-O-NoAB_S1" "TCPA-AB_S5" "TCPA-Input_S6"\
-        "TCPA-NoAB_S4" "Undetermined_S0")
+# Loop variables
 
-## perform fastp to remove low quality reads and adaptors 
-for i in ${list[@]}
+# Creating an array containing one instance of each sample ID
 
+#need to be able to separate by lanes
+lanes=("L001" \
+        "L002")
+
+declare -a files
+
+for file in $workingdir/RAW_DATA/S349_NovaSeq_BHLVN2DRX5/fastq/*
 do
-        echo ${i}
-
-        fastp \
-        -i $workingdir/RAW_DATA/230628_fastqs/${i}_merge_R1.fastq.gz \
-        -I $workingdir/RAW_DATA/230628_fastqs/${i}_merge_R2.fastq.gz \
-        -o $workingdir/trimmed_reads/${i}_fp1.fastq.gz \
-        -O $workingdir/trimmed_reads/${i}_fp2.fastq.gz \
-        --adapter_sequence=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA \
-	--adapter_sequence_r2=AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT \
-	--trim_poly_g \
-	--correction
+        # Arbitrarilly taking the R1 lanes to extrate the sample name whilst
+        # also ensuring it is a fastq file
+        if [[ $file == *R1*.fastq.gz ]]
+        then
+                files+=("$(basename ${file::-21})")
+        fi
 
 done
+
+echo ${files}
+
+# Trim low quality reads, remove adapters, and poly Gs
+
+echo "RUNNING fastp"
+
+for lane in ${lanes[@]}
+do
+
+        for file in ${files[@]}
+        do
+                echo ${file} "= running"
+
+                fastp \
+                    -i $workingdir/RAW_DATA/S349_NovaSeq_BHLVN2DRX5/fastq/${file}_${lane}_R1_001.fastq.gz \
+                        -I $workingdir/RAW_DATA/S349_NovaSeq_BHLVN2DRX5/fastq/${file}_${lane}_R2_001.fastq.gz \
+                    --detect_adapter_for_pe \
+                    --trim_poly_g \
+                    --correction \
+                    -o $exportdir/${file}_${lane}_R1.fastp \
+                    -O $exportdir/${file}_${lane}_R2.fastp
+
+                echo ${file} "= complete"
+
+        done
+
+        echo ${lane} "complete"
+done
+
+echo "fastp COMPLETE"
+echo "============================="
+#################################################################################
+# End
+#################################################################################
