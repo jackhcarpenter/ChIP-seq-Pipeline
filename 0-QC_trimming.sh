@@ -7,7 +7,7 @@
 #SBATCH --mem-per-cpu=4G      # in megabytes, unless unit explicitly stated
 #SBATCH --error=logs/%J.err         # redirect stderr to this file
 #SBATCH --output=logs/%J.out        # redirect stdout to this file
-#SBATCH --mail-user=USERNAME@INSTITUTIONAL_ADDRESS      # email
+#SBATCH --mail-user=your.email@host      # email
 #SBATCH --mail-type=BEGIN,END,FAIL      # email on job start, end, and/or failure
 
 
@@ -43,48 +43,51 @@ export workingdir=/your/working/dir
 # Main CMD
 #################################################################################
 
-## list of samples
-list=(
-        "sample_input1" "sample_inputn" "sample_ip1" "sample_ipn" "sample_neg1"\
-        "sample_negn" "control_input1" "control_inputn" "control_ip1" "control_ipn"\
-        "control_neg1" "control_negn")
+# Creating an array containing one instance of each sample ID
 
-## perform fastqc on the raw PE data
-for i in list ${list[@]}
+# need to be able to separate by lanes
+lanes=("L001" \
+        "L002")
+
+declare -a files
+
+for file in $workingdir/fastp/*
 do
-        echo ${i}
-
-        fastqc $workingdir/${i}_merge_R1.fastq.gz
-        fastqc $workingdir/${i}_merge_R2.fastq.gz
+        # Arbitrarilly taking the R1 lanes to extrate the sample name whilst
+        # also ensuring it is a fastq file
+        if [[ $file == *R1*.fastq.gz ]]
+        then
+                files+=("$(basename ${file::-14})")
+        fi
 
 done
 
-## summarise the QC data of all reads
-multiqc -i "PROJECT_NAME_RAW_SEQUENCES" $workingdir/
+## perform fastqc on the trimmed PE data
 
-## perform fastp to remove low quality reads and adaptors 
-for i in ${list[@]}
+for lane in ${lanes[@]}
 do
-        echo ${i}
 
-        fastp \
-        -i $workingdir/${i}_merge_R1.fastq.gz \
-        -I $workingdir/${i}_merge_R2.fastq.gz \
-        -o $workingdir/trimmed_reads/${i}_fp1.fastq.gz \
-        -O $workingdir/trimmed_reads/${i}_fp2.fastq.gz \
-        --detect_adapter_for_pe --trim_poly_g --correction
-        
-done
+        for file in ${files[@]}
+        do
+                echo ${file} "running"
 
-## perform fastqc on the trimmed sequences
-for i in ${list[@]}
-do
-        echo ${i}
+                fastqc $workingdir/${file}_${lane}_R1.fastp
+                fastqc $workingdir/${file}_${lane}_R2.fastp
 
-	    fastqc $workingdir/trimmed_reads/${i}_fp1.fastq.gz
-	    fastqc $workingdir/trimmed_reads/${i}_fp2.fastq.gz
+                echo ${file} "complete"
+
+        done
+
+        ## summarise the QC data of all reads
+        multiqc -i "TCP4_ChIP_LANE_"${lane} $workingdir/
+
+        echo "multiqc for "${lane}" complete"
 
 done
 
-## summarise the QC data of the filtered and trimmed reads
-multiqc -i "PROJECT_NAME" $workingdir/trimmed_reads/
+echo ${"QC complete"}
+echo ${"============================="}
+
+#################################################################################
+# End
+#################################################################################
