@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#SBATCH --partition=defq       # the requested queue
+#SBATCH --partition=queue_name      # the requested queue
 #SBATCH --nodes=1              # number of nodes to use
 #SBATCH --tasks-per-node=1     # for parallel distributed jobs
 #SBATCH --cpus-per-task=4      # for multi-threaded jobs
 #SBATCH --mem-per-cpu=4G      # in megabytes, unless unit explicitly stated
 #SBATCH --error=logs/%J.err         # redirect stderr to this file
 #SBATCH --output=logs/%J.out        # redirect stdout to this file
-#SBATCH --mail-user=carpenterj3@cardiff.ac.uk      # email
+#SBATCH --mail-user=your.email@host      # email
 #SBATCH --mail-type=BEGIN,END,FAIL      # email on job start, end, and/or failure
 
 #################################################################################
@@ -28,16 +28,43 @@ echo \$SLURM_MEM_PER_CPU=${SLURM_MEM_PER_CPU}
 # Modulels to Load and Setup
 #################################################################################
 
-module load multiqc/1.9   
-                            
-export workingdir=/mnt/scratch/c1831460/ChIP
+module load bowtie2/v2.4.1
 
-##REMEMBER: set up any directories that the software needs in this script in case 
-##it is unable to do so itself
+## point to the directory containing the reference genome where sequences will be
+## mapped
+
+mkdir At_reference_genome/
+
+export refdir=your/working/dir/At_reference_genome
+
+## point to the working directory
+#export workingdir=/your/working/dir
 
 #################################################################################
 # Main CMD
 #################################################################################
 
-## summarise the QC data of the filtered and trimmed reads
-multiqc -i "230628_TCP4_ChIP" $workingdir/trimmed_reads
+# Retrieving release 59 of the Arabidopsis thaliana reference genome
+
+echo "============================="
+echo "Retrieving TAIR10 Release 59"
+wget -P $refdir \
+        "https://ftp.ensemblgenomes.ebi.ac.uk/pub/plants/release-59/fasta/arabidopsis_thaliana/dna/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa.gz"
+wget -P $refdir \
+        "https://ftp.ensemblgenomes.ebi.ac.uk/pub/plants/release-59/gtf/arabidopsis_thaliana/Arabidopsis_thaliana.TAIR10.59.gtf.gz"
+
+# Indexing genomes
+
+echo "============================="
+echo "RUNNING INDEXING"
+
+## Index the genome for quicker access by bowtie2 during alignment
+
+bowtie2-build $refdir/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa.gz $refdir/Arabidopsis_thaliana.TAIR10.59.gtf.gz
+
+echo "INDEXING COMPLETE"
+echo "============================="
+
+#################################################################################
+# End
+#################################################################################

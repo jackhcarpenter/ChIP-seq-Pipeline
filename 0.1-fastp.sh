@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#SBATCH --partition=jumbo       # the requested queue
+#SBATCH --partition=queue_name       # the requested queue
 #SBATCH --nodes=1              # number of nodes to use
 #SBATCH --tasks-per-node=1     # for parallel distributed jobs
 #SBATCH --cpus-per-task=4      # for multi-threaded jobs
-#SBATCH --mem-per-cpu=16G      # in megabytes, unless unit explicitly stated
+#SBATCH --mem-per-cpu=4G      # in megabytes, unless unit explicitly stated
 #SBATCH --error=logs/%J.err         # redirect stderr to this file
 #SBATCH --output=logs/%J.out        # redirect stdout to this file
-#SBATCH --mail-user=carpenterj3@cardiff.ac.uk      # email
+#SBATCH --mail-user=your.email@host      # email
 #SBATCH --mail-type=BEGIN,END,FAIL      # email on job start, end, and/or failure
 
 #################################################################################
@@ -30,13 +30,13 @@ echo \$SLURM_MEM_PER_CPU=${SLURM_MEM_PER_CPU}
 
 module load fastp/v0.20
 
-export workingdir=/mnt/scratch/c1831460/ChIP
+export workingdir=your/working/dir
 
 echo "working dir =" $workingdir
 
 mkdir fastp
 
-export exportdir=/mnt/scratch/c1831460/ChIP/fastp
+export exportdir=your/working/dir/fastp
 
 echo "export dir =" $exportdir
 
