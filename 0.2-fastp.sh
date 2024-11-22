@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#SBATCH --partition=jumbo       # the requested queue
+#SBATCH --partition=queue_name       # the requested queue
 #SBATCH --nodes=1              # number of nodes to use
 #SBATCH --tasks-per-node=1     # for parallel distributed jobs
-#SBATCH --cpus-per-task=4      # for multi-threaded jobs
-#SBATCH --mem-per-cpu=16G      # in megabytes, unless unit explicitly stated
+#SBATCH --cpus-per-task=6      # for multi-threaded jobs
+#SBATCH --mem-per-cpu=2G      # in megabytes, unless unit explicitly stated
 #SBATCH --error=logs/%J.err         # redirect stderr to this file
 #SBATCH --output=logs/%J.out        # redirect stdout to this file
-#SBATCH --mail-user=carpenterj3@cardiff.ac.uk      # email
+#SBATCH --mail-user=your.email@host     # email
 #SBATCH --mail-type=BEGIN,END,FAIL      # email on job start, end, and/or failure
 
 #################################################################################
@@ -30,13 +30,13 @@ echo \$SLURM_MEM_PER_CPU=${SLURM_MEM_PER_CPU}
 
 module load fastp/v0.20
 
-export workingdir=/mnt/scratch/c1831460/ChIP
+export workingdir=your/working/dir
 
 echo "working dir =" $workingdir
 
 mkdir fastp
 
-export exportdir=/mnt/scratch/c1831460/ChIP/fastp
+export exportdir=your/working/dir/fastp
 
 echo "export dir =" $exportdir
 
@@ -51,19 +51,15 @@ echo "export dir =" $exportdir
 
 # Creating an array containing one instance of each sample ID
 
-#need to be able to separate by lanes
-lanes=("L001" \
-        "L002")
-
 declare -a files
 
-for file in $workingdir/RAW_DATA/S349_NovaSeq_BHLVN2DRX5/fastq/*
+for file in $workingdir/merged/*
 do
         # Arbitrarilly taking the R1 lanes to extrate the sample name whilst
         # also ensuring it is a fastq file
-        if [[ $file == *R1*.fastq.gz ]]
+        if [[ $file == *R1.fastq.gz ]]
         then
-                files+=("$(basename ${file::-21})")
+                files+=("$(basename ${file::-12})")
         fi
 
 done
@@ -74,28 +70,23 @@ echo ${files}
 
 echo "RUNNING fastp"
 
-for lane in ${lanes[@]}
+for file in ${files[@]}
 do
+        echo ${file} "= running"
 
-        for file in ${files[@]}
-        do
-                echo ${file} "= running"
+        fastp \
+            -i $workingdir/merged/${file}_R1.fastq.gz \
+                -I $workingdir/merged/${file}_R2.fastq.gz \
+            --detect_adapter_for_pe \
+            --trim_poly_g \
+            --correction \
+            -o $exportdir/${file}_R1.fastp \
+            -O $exportdir/${file}_R2.fastp
 
-                fastp \
-                    -i $workingdir/RAW_DATA/S349_NovaSeq_BHLVN2DRX5/fastq/${file}_${lane}_R1_001.fastq.gz \
-                        -I $workingdir/RAW_DATA/S349_NovaSeq_BHLVN2DRX5/fastq/${file}_${lane}_R2_001.fastq.gz \
-                    --detect_adapter_for_pe \
-                    --trim_poly_g \
-                    --correction \
-                    -o $exportdir/${file}_${lane}_R1.fastp \
-                    -O $exportdir/${file}_${lane}_R2.fastp
+        echo ${file} "= complete"
 
-                echo ${file} "= complete"
-
-        done
-
-        echo ${lane} "complete"
 done
+
 
 echo "fastp COMPLETE"
 echo "============================="

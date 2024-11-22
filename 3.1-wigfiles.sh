@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --partition=jumbo       # the requested queue
+#SBATCH --partition=queue_name       # the requested queue
 #SBATCH --nodes=1              # number of nodes to use
 #SBATCH --tasks-per-node=1     # for parallel distributed jobs
 #SBATCH --cpus-per-task=8      # for multi-threaded jobs
@@ -8,7 +8,7 @@
 #SBATCH --time=20:00:00
 #SBATCH --error=logs/%J.err         # redirect stderr to this file
 #SBATCH --output=logs/%J.out        # redirect stdout to this file
-#SBATCH --mail-user=carpenterj3@cardiff.ac.uk # email address used for event notification
+#SBATCH --mail-user=your.email@host # email address used for event notification
 #SBATCH --mail-type=BEGIN,END,FAIL # email on job start, end, and/or failure
 
 #################################################################################
@@ -35,39 +35,55 @@ module load deeptools/3.5.1
 
 ## point to the directory containing the reference genome where sequences will be
 ## mapped
-export refdir=/mnt/scratch/c1831460/ChIP/At_reference_genome
+export refdir=your/working/dir/At_reference_genome
 
 ## point to the working directory
-export workingdir=/mnt/scratch/c1831460/ChIP
+export workingdir=/your/working/dir
 
-##REMEMBER: set up any directories that the software needs in this script in case 
+mkdir beds
+mkdir wigs
+
+##REMEMBER: set up any directories that the software needs in this script in case
 ##it is unable to do so itself
 
 #################################################################################
 # Main CMD
 #################################################################################
 
-list=(
-        "Col-O-AB_S2" "Col-O-Input_S3" "Col-O-NoAB_S1" \
-	"TCPA-AB_S5" "TCPA-Input_S6" "TCPA-NoAB_S4")
+declare -a files
 
-
-for i in ${list[@]}
+for file in $workingdir/bowtie/*sorted.bam
 do
-        echo ${i}
+        # Arbitrarilly taking the R1 lanes to extrate the sample name
+
+        files+=("$(basename ${file::-11})")
+
+done
+
+for file in ${files[@]}
+do
+        echo ${file} "= running..."
 
 ## Use samtools to create an index in fasta format so as betools can access quickly
-    samtools faidx $refdir/Arabidopsis_thaliana.release56.TAIR10.dna.toplevel.fa
+    samtools faidx $refdir/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa
 
-## Bin (make discrete) map sequences to create histograms 
+## Bin (make discrete) map sequences to create histograms
         bedtools genomecov \
-        -ibam $workingdir/bowtie/maxins_650/${i}.sorted.bam \
+        -ibam $workingdir/bowtie/${file}.sorted.bam \
         -bg \
-        -g $redir/Arabidopsis_thaliana.release56.TAIR10.dna.toplevel.fa.fai > $workingdir/beds/${i}.bedgraph
+        -g $redir/Arabidopsis_thaliana.release59.TAIR10.dna.toplevel.fa.fai > \
+        $workingdir/beds/${file}.bedgraph
+
+        echo ${file} "genome covarage = complete"
 
 ## Generate a coverage track to view in Integrated Genome Viewer
         bamCoverage \
-        -b $workingdir/bowtie/maxins_650/${i}.sorted.bam \
-        -o $workingdir/wigs/${i}.bw
+        -b $workingdir/bowtie/${file}.sorted.bam \
+        -o $workingdir/wigs/${file}.bw
+
+        echo ${file} "bam covarage = complete"
 
 done
+#################################################################################
+# End
+#################################################################################
